@@ -67,9 +67,10 @@ impl SongSettings {
             panic!("Invalid time signature settings!");
         }
 
-        let divisor = 4.0 / self.time_signature_denominator as f32;
+        let divisor : f64 = self.get_time_signature_denominator() as f64 / 4.0;
+        // println!("Divisor: {} {}/{}.", divisor, self.get_time_signature_numerator(), self.get_time_signature_denominator());
 
-        self.ppq / (divisor.floor() as u64)
+        (self.ppq as f64 / divisor) as u64
     }
 
     pub fn get_sample_rate(&self) -> i64 {

@@ -9,14 +9,3 @@ pub mod prelude {
     pub use crate::song_settings::SongSettings;
     pub use crate::song_position::SongPosition;
 }
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        
-    }
-}
