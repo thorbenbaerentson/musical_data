@@ -1,18 +1,37 @@
 use core::fmt;
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct SongSettings
 {
+    ppq : u64,          // Pulses per Quarter
     sample_rate : i64,
     frame_type : i64,
     tempo : f64,
-    time_signature_numerator : i32,
-    time_signature_denominator : i32,
+    time_signature_numerator : u64,
+    time_signature_denominator : u64,
     key_signature : String,
     track_count : i32,
     length : f64,
     bit_depth : i64,
     time_format : i64,
+}
+
+impl Default for SongSettings {
+    fn default() -> Self {
+        Self { 
+            ppq: 960, 
+            sample_rate: 44100, 
+            frame_type: Default::default(), 
+            tempo: 120.0, 
+            time_signature_numerator: 4, 
+            time_signature_denominator: 4, 
+            key_signature: String::from("C Major"), 
+            track_count: Default::default(), 
+            length: Default::default(), 
+            bit_depth: 64, 
+            time_format: Default::default() 
+        }
+    }
 }
 
 impl fmt::Display for SongSettings {
@@ -35,6 +54,24 @@ impl fmt::Display for SongSettings {
 
 impl SongSettings {
     // Getters
+    pub fn get_pulses_per_quarter(&self) -> u64 {
+        self.ppq
+    }
+
+    /// Get the number of pulses per beat. We need this in order to calculate 
+    /// the nummber of ticks per beat if the denominator of the time signature 
+    /// in not 4. But rather 8, 16 or 2 and 1 etc.
+    pub fn get_pulses_per_beat(&self) -> u64 {
+        if self.get_time_signature_denominator() != 1 &&
+           self.get_time_signature_denominator() % 2 != 0 {
+            panic!("Invalid time signature settings!");
+        }
+
+        let divisor = 4.0 / self.time_signature_denominator as f32;
+
+        self.ppq / (divisor.floor() as u64)
+    }
+
     pub fn get_sample_rate(&self) -> i64 {
         self.sample_rate
     }
@@ -47,11 +84,11 @@ impl SongSettings {
         self.tempo
     }
 
-    pub fn get_time_signature_numerator(&self) -> i32 {
+    pub fn get_time_signature_numerator(&self) -> u64 {
         self.time_signature_numerator
     }
 
-    pub fn get_time_signature_denominator(&self) -> i32 {
+    pub fn get_time_signature_denominator(&self) -> u64 {
         self.time_signature_denominator
     }
 
@@ -76,6 +113,10 @@ impl SongSettings {
     }
 
     // Setters
+    pub fn set_pulses_per_quarter(&mut self, value : u64) {
+        self.ppq = value
+    }
+
     pub fn set_sample_rate(&mut self, value: i64) {
         self.sample_rate = value;
     }
@@ -88,11 +129,11 @@ impl SongSettings {
         self.tempo = value;
     }
 
-    pub fn set_time_signature_numerator(&mut self, value: i32) {
+    pub fn set_time_signature_numerator(&mut self, value: u64) {
         self.time_signature_numerator = value;
     }
 
-    pub fn set_time_signature_denominator(&mut self, value: i32) {
+    pub fn set_time_signature_denominator(&mut self, value: u64) {
         self.time_signature_denominator = value;
     }
 
@@ -120,6 +161,13 @@ impl SongSettings {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_ppq_getter_setter() {
+        let mut song_settings = SongSettings::default();
+        song_settings.set_pulses_per_quarter(960 * 2);
+        assert_eq!(song_settings.get_pulses_per_quarter(), 960 * 2);
+    }
 
     #[test]
     fn test_sample_rate_getter_and_setter() {
@@ -190,5 +238,17 @@ mod tests {
         let mut song_settings = SongSettings::default();
         song_settings.set_time_format(1);
         assert_eq!(song_settings.get_time_format(), 1);
+    }
+
+    #[test]
+    fn test_default() {
+        let subject = SongSettings::default();
+        assert_eq!(*subject.get_key_signature(), String::from("C Major"));
+        assert_eq!(subject.get_bit_depth(), 64);
+        assert_eq!(subject.get_sample_rate(), 44100);
+        assert_eq!(subject.get_time_signature_denominator(), 4);
+        assert_eq!(subject.get_time_signature_numerator(), 4);
+        assert_eq!(subject.get_tempo(), 120.0);
+        assert_eq!(subject.get_pulses_per_quarter(), 960);
     }
 }
